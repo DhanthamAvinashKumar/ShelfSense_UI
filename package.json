@@ -31,6 +31,8 @@
     "@angular/router": "^20.3.0",
     "@azure/storage-blob": "^12.29.1",
     "bootstrap": "^5.3.8",
+    "lottie-web": "^5.13.0",
+    "ngx-lottie": "^20.0.0",
     "ngx-toastr": "^19.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

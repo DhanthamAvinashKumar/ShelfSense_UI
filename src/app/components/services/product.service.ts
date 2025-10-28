@@ -28,7 +28,9 @@ export class ProductService {
    * @param data Product payload
    */
   createProduct(data: Partial<Product>): Observable<any> {
-    return this.http.post(PRODUCT_API_URL, data, { headers: this.getAuthHeaders() });
+    // If data is FormData, don't set the Content-Type header so browser sets multipart boundary
+    const headers = data instanceof FormData ? this.getAuthHeaders() : this.getAuthHeaders();
+    return this.http.post(PRODUCT_API_URL, data as any, { headers });
   }
 
   /**
@@ -44,7 +46,8 @@ export class ProductService {
    * @param data Updated product payload
    */
   updateProduct(id: number, data: Partial<Product>): Observable<any> {
-    return this.http.put(`${PRODUCT_API_URL}/${id}`, data, { headers: this.getAuthHeaders() });
+    const headers = data instanceof FormData ? this.getAuthHeaders() : this.getAuthHeaders();
+    return this.http.put(`${PRODUCT_API_URL}/${id}`, data as any, { headers });
   }
 
   /**

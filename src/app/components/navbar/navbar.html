@@ -1,10 +1,18 @@
 <nav class="navbar">
   <div class="navbar-brand">
-    <a routerLink="/" class="brand-text">ShelfSense</a>
+    <a routerLink="/landing" routerLinkActive="active" class="brand-text">ShelfSense</a>
   </div>
 
   <div class="navbar-links">
-    <!-- <a routerLink="/register" routerLinkActive="active">Register</a> -->
+    <a routerLink="/landing" routerLinkActive="active">Home</a>
+    <a routerLink="/add-product" routerLinkActive="active">Products</a>
+    <a routerLink="/product-Shelf" routerLinkActive="active">Product Shelf</a>
+    <a routerLink="/add-category" routerLinkActive="active">Categories</a>
+    <a routerLink="/add-shelf" routerLinkActive="active">Shelves</a>
+    <a routerLink="/shelf_metrics" routerLinkActive="active">Shelf Metrics</a>
     <a routerLink="/login" routerLinkActive="active">Login</a>
+    <a routerLink="/register" routerLinkActive="active">Register</a>
+    <!-- If you have a logout route or method, you can replace the href with a routerLink or click handler -->
+    <a href="#" (click)="$event.preventDefault();">Logout</a>
   </div>
 </nav>

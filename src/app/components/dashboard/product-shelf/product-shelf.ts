@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
@@ -8,7 +8,7 @@ import { ProductShelfService, ProductShelfEntry } from '../../services/product-s
 @Component({
   selector: 'app-product-shelf',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './product-shelf.html',
   styleUrls: ['./product-shelf.css']
 })
@@ -24,6 +24,12 @@ export class ProductShelf {
   showDeleteModal = false;
   pendingDeleteId: number | null = null;
 
+  filterText = '';
+  sortColumn: keyof ProductShelfEntry = 'productShelfId';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  currentPage = 1;
+  pageSize = 5;
+
   constructor(
     private fb: FormBuilder,
     private toastr: ToastrService,
@@ -33,7 +39,8 @@ export class ProductShelf {
       productId: [null, [Validators.required, Validators.min(1)]],
       shelfId: [null],
       categoryId: [null, [Validators.required, Validators.min(1)]],
-      initialQuantity: [null, [Validators.required, Validators.min(1)]]
+      initialQuantity: [null, [Validators.required, Validators.min(1)]],
+      maxCapacity: [200, [Validators.required, Validators.min(1)]]
     });
   }
 
@@ -51,6 +58,55 @@ export class ProductShelf {
     });
   }
 
+  get filteredMappings(): ProductShelfEntry[] {
+    const text = this.filterText.trim().toLowerCase();
+    return this.productShelves
+      .filter(entry =>
+        entry.productId.toString().includes(text) ||
+        entry.shelfId?.toString().includes(text) ||
+        entry.quantity.toString().includes(text) ||
+        entry.maxCapacity?.toString().includes(text)
+      )
+      .sort((a, b) => {
+        const aVal = (a[this.sortColumn] ?? '').toString().toLowerCase();
+        const bVal = (b[this.sortColumn] ?? '').toString().toLowerCase();
+        return this.sortDirection === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      });
+  }
+
+  get paginatedMappings(): ProductShelfEntry[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredMappings.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredMappings.length / this.pageSize);
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  sortBy(column: keyof ProductShelfEntry): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+  }
+
   onSubmit(): void {
     if (this.mappingForm.invalid) {
       this.mappingForm.markAllAsTouched();
@@ -63,7 +119,8 @@ export class ProductShelf {
       const updatePayload = {
         productId: Number(this.mappingForm.value.productId),
         shelfId: Number(this.mappingForm.value.shelfId),
-        quantity: Number(this.mappingForm.value.initialQuantity)
+        quantity: Number(this.mappingForm.value.initialQuantity),
+        maxCapacity: Number(this.mappingForm.value.maxCapacity)
       };
 
       this.productShelfService.update(this.editId, updatePayload).subscribe({
@@ -81,7 +138,8 @@ export class ProductShelf {
       const assignPayload = {
         productId: Number(this.mappingForm.value.productId),
         categoryId: Number(this.mappingForm.value.categoryId),
-        initialQuantity: Number(this.mappingForm.value.initialQuantity)
+        initialQuantity: Number(this.mappingForm.value.initialQuantity),
+        maxCapacity: Number(this.mappingForm.value.maxCapacity)
       };
 
       this.productShelfService.autoAssign(assignPayload).subscribe({
@@ -105,7 +163,8 @@ export class ProductShelf {
       productId: entry.productId,
       shelfId: entry.shelfId,
       categoryId: null,
-      initialQuantity: entry.quantity
+      initialQuantity: entry.quantity,
+      maxCapacity: entry.maxCapacity
     });
 
     this.mappingForm.get('categoryId')?.clearValidators();
@@ -116,7 +175,7 @@ export class ProductShelf {
   }
 
   resetForm(): void {
-    this.mappingForm.reset();
+    this.mappingForm.reset({ maxCapacity: 200 });
     this.isEditMode = false;
     this.editId = null;
     this.isSubmitting = false;

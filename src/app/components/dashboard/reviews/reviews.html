@@ -1,0 +1,17 @@
+<div class="reviews">
+  <h3 class="reviews-title">What our users say</h3>
+  <div class="review-slider">
+    <div class="review-track">
+      <div class="review-card" *ngFor="let review of reviews">
+        <img class="avatar" [src]="splashImage" alt="Reviewer photo">
+        <p class="quote">"{{ review.statement }}"</p>
+        <div class="meta">
+          <span>{{ review.name }}</span>
+          <span class="stars">
+            <i class="fas fa-star" *ngFor="let star of [].constructor(review.stars)"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

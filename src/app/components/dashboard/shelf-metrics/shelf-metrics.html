@@ -1,31 +1,97 @@
-<!-- ✅ Shelf Metrics Table -->
+<!-- 🔍 Filter Bar -->
+<div class="filter-bar-wrapper">
+  <div class="filter-bar">
+    <label for="filterInput">Search:</label>
+    <div class="filter-controls">
+      <input
+        id="filterInput"
+        type="text"
+        [(ngModel)]="filterText"
+        placeholder="Filter shelf metrics..."
+        class="filter-input"
+      />
+      <button type="button" class="btn-clear-filter" (click)="filterText = ''" [disabled]="!filterText">
+        <i class="fas fa-times-circle"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 📊 Shelf Metrics Table -->
 <div class="category-table-container">
   <div class="table-header-bar">
     <h5>Shelf Metrics (Last 30 Days)</h5>
 
     <button class="btn-load" (click)="loadMetrics()" [disabled]="isLoading">
-      <span *ngIf="!isLoading">Reload Metrics ({{ metrics.length }})</span>
-      <span *ngIf="isLoading">
-        <i class="fas fa-spinner fa-spin me-2"></i> Loading...
-      </span>
+      <span *ngIf="!isLoading">Reload Metrics</span>
+      <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin me-2"></i> Loading...</span>
     </button>
   </div>
 
-  <table class="category-table" *ngIf="metrics.length > 0 && !isLoading">
+  <table class="category-table" *ngIf="paginatedMetrics.length > 0 && !isLoading">
     <thead>
       <tr>
-        <th>Shelf Code</th>
-        <th>Capacity</th>
-        <th>Stock</th>
-        <th>Occupancy %</th>
-        <th>Products Assigned</th>
-        <th>Restocks (30d)</th>
-        <th>Avg Days Between Restocks</th>
-        <th>Action</th>
+        <th class="sortable" (click)="sortBy('shelfCode')">
+          Shelf Code
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'shelfCode' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'shelfCode' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'shelfCode'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('totalCapacity')">
+          Capacity
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'totalCapacity' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'totalCapacity' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'totalCapacity'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('currentStock')">
+          Stock
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'currentStock' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'currentStock' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'currentStock'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('occupancyPercentage')">
+          Occupancy %
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'occupancyPercentage' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'occupancyPercentage' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'occupancyPercentage'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('totalProductsAssigned')">
+          Products Assigned
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'totalProductsAssigned' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'totalProductsAssigned' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'totalProductsAssigned'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('restockCountLast30Days')">
+          Restocks (30d)
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'restockCountLast30Days' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'restockCountLast30Days' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'restockCountLast30Days'
+          }"></i>
+        </th>
+        <th class="sortable" (click)="sortBy('averageDaysBetweenRestocks')">
+          Avg Days Between Restocks
+          <i class="fas" [ngClass]="{
+            'fa-sort-up': sortColumn === 'averageDaysBetweenRestocks' && sortDirection === 'asc',
+            'fa-sort-down': sortColumn === 'averageDaysBetweenRestocks' && sortDirection === 'desc',
+            'fa-sort': sortColumn !== 'averageDaysBetweenRestocks'
+          }"></i>
+        </th>
+
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let m of metrics">
+      <tr *ngFor="let m of paginatedMetrics">
         <td>{{ m.shelfCode }}</td>
         <td>{{ m.totalCapacity }}</td>
         <td>{{ m.currentStock }}</td>
@@ -33,35 +99,32 @@
         <td>{{ m.totalProductsAssigned }}</td>
         <td>{{ m.restockCountLast30Days }}</td>
         <td>{{ m.averageDaysBetweenRestocks }}</td>
-        <td>
-         
-          <button class="btn-delete" (click)="openDeleteModal(m.shelfId, m.shelfCode)" title="Delete {{ m.shelfCode }}">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-        </td>
+        
       </tr>
     </tbody>
   </table>
 
-  <div *ngIf="metrics.length === 0 && !isLoading" class="alert-info">
-    No shelf metrics found. Click <strong>"Reload Metrics"</strong> to fetch data.
+  <div *ngIf="paginatedMetrics.length === 0 && !isLoading" class="alert-info mt-3">
+    No matching shelf metrics found.
   </div>
 
-  <div *ngIf="isLoading" class="alert-info">
-    <i class="fas fa-spinner fa-spin me-1"></i> Loading shelf metrics from server...
-  </div>
-</div>
+  <!-- ➡️ Pagination Controls -->
+  <div class="pagination-controls" *ngIf="filteredMetrics.length > pageSize">
+    <div class="page-size-selector">
+      <label>Page Size:</label>
+      <select [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+      </select>
+    </div>
 
-<!-- ✅ Delete Confirmation Modal -->
-<div class="modal-overlay" *ngIf="showDeleteModal">
-  <div class="modal-content delete-modal-content">
-    <h4>Confirm Deletion</h4>
-    <p>Are you sure you want to delete shelf <strong>{{ pendingDeleteCode }}</strong> (ID: {{ pendingDeleteId }})?</p>
-    <p class="text-danger small">This action cannot be undone.</p>
-
-    <div class="modal-actions">
-      <button class="btn-confirm" (click)="confirmDelete()">Yes, Delete</button>
-      <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
+    <div class="pagination-buttons">
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 1">Prev</button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
     </div>
   </div>
 </div>
+
+

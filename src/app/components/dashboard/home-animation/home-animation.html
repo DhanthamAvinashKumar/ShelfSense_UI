@@ -1,6 +1,4 @@
-<app-sidebar></app-sidebar>
 <div class="main-content">
-  <!-- Creative Animated Landing Hero -->
   <section class="landing-creative">
     <!-- Particle / Orbs background -->
     <div class="particles" aria-hidden="true">
@@ -12,7 +10,7 @@
     </div>
 
     <div class="hero-inner">
-      <div class="hero-left">
+      <div class="welcome-wrapper">
         <h1 class="hero-title">
           <span class="typewrap">Welcome to</span>
           <span class="brand">ShelfSense</span>
@@ -27,31 +25,28 @@
         <p class="hero-desc">Intelligent shelf management that adapts to your store — beautiful, fast, and secure.</p>
 
         <div class="hero-actions">
-          <button class="cta primary">Get Started</button>
-          <button class="cta ghost">Explore Features</button>
+          <button class="cta primary" (click)="getStarted()">Get Started</button>
+          <button class="cta ghost" (click)="exploreFeatures()">Explore Features</button>
         </div>
       </div>
 
-      <div class="hero-right">
+      <div class="centered-cards">
         <div class="card-grid">
           <div class="gcard g1">
             <div class="gicon">📊</div>
             <h4>Live Metrics</h4>
             <p>Visual insights to reduce shrink and stockouts.</p>
           </div>
-
           <div class="gcard g2">
             <div class="gicon">🔍</div>
             <h4>Smart Search</h4>
             <p>Quickly locate products and shelves.</p>
           </div>
-
           <div class="gcard g3">
             <div class="gicon">⚙️</div>
             <h4>Automations</h4>
             <p>Automated rules for restocking and alerts.</p>
           </div>
-
           <div class="gcard g4">
             <div class="gicon">🔐</div>
             <h4>Security</h4>
@@ -59,6 +54,15 @@
           </div>
         </div>
       </div>
+
+      <!-- <div class="hero-cta">
+        <button class="btn-primary">Explore Dashboard</button>
+        <button class="btn-ghost">View Docs</button>
+      </div> -->
+
+      <!-- replace static reviews with reviews component -->
+      <app-reviews></app-reviews>
+
     </div>
 
     <footer class="hero-footer">© ShelfSense — Empowering retail operations</footer>

@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
 
 export interface ProductShelfEntry {
+  maxCapacity: any;
   productShelfId: number;
   productId: number;
   shelfId: number;

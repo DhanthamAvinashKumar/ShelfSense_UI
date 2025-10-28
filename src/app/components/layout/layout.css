@@ -1,11 +1,15 @@
+/* Layout container: stack on small screens, two columns on larger screens */
 .layout-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background: linear-gradient(180deg, #f7fff7, #ffffff);
 }
 
+/* Sidebar defaults to full width on small screens */
 app-sidebar {
   width: 100%;
+  transition: width 0.24s ease, transform 0.24s ease;
 }
 
 .main-content {
@@ -15,17 +19,50 @@ app-sidebar {
   margin-left: 0;
 }
 
+/* Desktop / wider screens: use a 20-30% sidebar and remaining content for main area */
 @media (min-width: 768px) {
   .layout-container {
     flex-direction: row;
+    align-items: stretch;
   }
 
+  /* Use clamp to keep sidebar between 220px and 320px while aiming for 22% width */
   app-sidebar {
-    width: 220px;
+    width: clamp(220px, 22vw, 320px);
     flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 6px 30px rgba(6,95,70,0.04);
+    border-right: 1px solid rgba(6,95,70,0.04);
+    background: rgba(255,255,255,0.98);
   }
 
   .main-content {
-    padding: 2rem;
+    flex: 1 1 auto;
+    padding: 2.5rem;
+    min-width: 0; /* allow flex children to shrink properly */
   }
 }
+
+/* Small screens: make sidebar collapsible appearance (visual only) */
+@media (max-width: 767px) {
+  app-sidebar {
+    position: relative;
+    box-shadow: none;
+    border-right: none;
+  }
+  .main-content {
+    padding: 1.25rem;
+  }
+}
+
+/* Utility: center the main area children (e.g., landing hero) */
+.main-content > * {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Smooth scrolling and comfortable line-length */
+.main-content { scroll-behavior: smooth; }
+.main-content p { line-height: 1.6; color: #163e2e; }

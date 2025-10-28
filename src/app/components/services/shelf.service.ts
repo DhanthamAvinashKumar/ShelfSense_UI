@@ -29,7 +29,9 @@ export class ShelfService {
    * @param data Shelf payload
    */
   createShelf(data: any): Observable<any> {
-    return this.http.post(SHELF_API_URL, data, { headers: this.getAuthHeaders() });
+    // If data is FormData, do not override Content-Type header
+    const headers = data instanceof FormData ? this.getAuthHeaders() : this.getAuthHeaders();
+    return this.http.post(SHELF_API_URL, data, { headers });
   }
 
   /**
@@ -45,7 +47,8 @@ export class ShelfService {
    * @param data Updated shelf payload
    */
   updateShelf(id: number, data: any): Observable<any> {
-    return this.http.put(`${SHELF_API_URL}/${id}`, data, { headers: this.getAuthHeaders() });
+    const headers = data instanceof FormData ? this.getAuthHeaders() : this.getAuthHeaders();
+    return this.http.put(`${SHELF_API_URL}/${id}`, data, { headers });
   }
 
   /**

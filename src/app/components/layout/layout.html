@@ -1,6 +1,9 @@
 <div class="layout-container">
   <app-sidebar></app-sidebar>
   <div class="main-content">
+    <!-- Primary router outlet for all child pages -->
     <router-outlet></router-outlet>
+    <!-- Secondary: when no route is active, show our home animation via named outlet fallback -->
+    <router-outlet name="homeFallback"></router-outlet>
   </div>
 </div>

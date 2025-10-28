@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
@@ -12,12 +12,13 @@ export interface Product {
   categoryId: number;
   packageSize?: string;
   unit?: string;
+  imageUrl?: string;
 }
 
 @Component({
   selector: 'app-product',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './add-product.html',
   styleUrls: ['./add-product.css']
 })
@@ -29,10 +30,19 @@ export class ProductComponent implements OnInit {
   editProductId: number | null = null;
   isSubmitting = false;
   isLoadingProducts = false;
+  selectedImageFile: File | null = null;
+  selectedImagePreview: string | null = null;
 
   showDeleteModal = false;
   pendingDeleteId: number | null = null;
   pendingDeleteName = '';
+
+  // Filtering, Sorting, Pagination
+  filterText = '';
+  sortColumn: keyof Product = 'productName';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  currentPage = 1;
+  pageSize = 5;
 
   constructor(
     private fb: FormBuilder,
@@ -48,9 +58,6 @@ export class ProductComponent implements OnInit {
       packageSize: ['', Validators.maxLength(50)],
       unit: ['', Validators.maxLength(20)]
     });
-
-    // ❌ Removed auto-load of products
-    // ✅ Products will load only when user clicks "Reload Products"
   }
 
   loadProducts(): void {
@@ -63,12 +70,63 @@ export class ProductComponent implements OnInit {
         this.toastr.success(`Loaded ${this.products.length} products.`, 'Success');
         this.isLoadingProducts = false;
       },
-      error: (err) => {
-        console.error('Error loading products:', err);
+      error: () => {
         this.toastr.error('Failed to load products.', 'Error');
         this.isLoadingProducts = false;
       }
     });
+  }
+
+  get filteredProducts(): Product[] {
+    const text = this.filterText.trim().toLowerCase();
+    let filtered = this.products.filter(p =>
+      p.stockKeepingUnit.toLowerCase().includes(text) ||
+      p.productName.toLowerCase().includes(text) ||
+      p.categoryId.toString().includes(text) ||
+      p.packageSize?.toLowerCase().includes(text) ||
+      p.unit?.toLowerCase().includes(text)
+    );
+
+    filtered.sort((a, b) => {
+      const aVal = (a[this.sortColumn] ?? '').toString().toLowerCase();
+      const bVal = (b[this.sortColumn] ?? '').toString().toLowerCase();
+      return this.sortDirection === 'asc'
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    });
+
+    return filtered;
+  }
+
+  get paginatedProducts(): Product[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredProducts.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredProducts.length / this.pageSize);
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  sortBy(column: keyof Product): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
   }
 
   onSubmit(): void {
@@ -78,11 +136,28 @@ export class ProductComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    const payload = { ...this.productForm.value };
+    // If user selected an image, send FormData to include the file; otherwise send JSON payload
+    let request: any;
+    if (this.selectedImageFile) {
+      const formData = new FormData();
+      const vals: any = this.productForm.value;
+      formData.append('stockKeepingUnit', vals.stockKeepingUnit);
+      formData.append('productName', vals.productName);
+      formData.append('categoryId', String(vals.categoryId));
+      formData.append('packageSize', vals.packageSize || '');
+      formData.append('unit', vals.unit || '');
+      formData.append('image', this.selectedImageFile);
 
-    const request = this.isEditMode && this.editProductId
-      ? this.productService.updateProduct(this.editProductId, payload)
-      : this.productService.createProduct(payload);
+      // cast FormData to any so it can be passed to service methods expecting Partial<Product>
+      request = this.isEditMode && this.editProductId
+        ? this.productService.updateProduct(this.editProductId, formData as any)
+        : this.productService.createProduct(formData as any);
+    } else {
+      const payload = { ...this.productForm.value };
+      request = this.isEditMode && this.editProductId
+        ? this.productService.updateProduct(this.editProductId, payload)
+        : this.productService.createProduct(payload);
+    }
 
     request.subscribe({
       next: () => {
@@ -98,6 +173,11 @@ export class ProductComponent implements OnInit {
     this.isEditMode = true;
     this.editProductId = product.productId;
     this.productForm.patchValue(product);
+    // Show existing server image when editing (if available)
+    // product may include imageUrl property coming from backend
+    // keep selectedImageFile null until user picks a new file
+    this.selectedImagePreview = product.imageUrl || null;
+    this.selectedImageFile = null;
   }
 
   resetForm(): void {
@@ -105,6 +185,8 @@ export class ProductComponent implements OnInit {
     this.isEditMode = false;
     this.editProductId = null;
     this.isSubmitting = false;
+    this.selectedImageFile = null;
+    this.selectedImagePreview = null;
   }
 
   openDeleteModal(id: number, name: string): void {
@@ -130,6 +212,19 @@ export class ProductComponent implements OnInit {
       error: () => this.toastr.error('Failed to delete product.', 'Error'),
       complete: () => this.cancelDelete()
     });
+  }
+
+  onImageSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e: any) => this.selectedImagePreview = e.target.result;
+      reader.readAsDataURL(file);
+    } else {
+      this.selectedImageFile = null;
+      this.selectedImagePreview = null;
+    }
   }
 
   get f() {
