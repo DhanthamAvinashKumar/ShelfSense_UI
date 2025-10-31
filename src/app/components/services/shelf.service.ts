@@ -16,7 +16,15 @@ export class ShelfService {
    * Throws an error if token is missing.
    */
   private getAuthHeaders(): HttpHeaders {
-    const token = this.auth.getToken();
+    // Use a loose-typed reference to support different AuthService implementations
+    const authAny = this.auth as any;
+    const token =
+      (typeof authAny.getToken === 'function' && authAny.getToken()) ||
+      authAny.token ||
+      authAny.accessToken ||
+      (typeof authAny.getAccessToken === 'function' && authAny.getAccessToken()) ||
+      authAny.getAccessToken?.();
+
     if (!token) {
       // In a real application, you might redirect to the login page or handle this more gracefully
       throw new Error('Authentication token not found.');

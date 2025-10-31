@@ -36,7 +36,7 @@
 //    * Throws an error if the token is missing, ensuring API calls are only attempted when authenticated.
 //    */
 //   private getAuthHeaders(): HttpHeaders {
-//     const token = this.auth.getToken();
+//     const token = (this.auth as any).token ?? localStorage.getItem('token');
 //     if (!token) {
 //       // Throwing an error is fine, but you might consider using an interceptor
 //       // or redirecting the user to the login page in a real-world app.
@@ -113,7 +113,7 @@ export class CategoryService {
   constructor(private http: HttpClient, private auth: AuthService) {}
 
   private getAuthHeaders(): HttpHeaders {
-    const token = this.auth.getToken();
+    const token = (this.auth as any).token ?? localStorage.getItem('token');
     if (!token) throw new Error('Authentication token not found.');
     return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
@@ -160,3 +160,4 @@ export class CategoryService {
     return this.http.delete(`${CATEGORY_API_URL}/${id}`, { headers });
   }
 }
+

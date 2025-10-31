@@ -14,12 +14,37 @@ export class ProductService {
   /**
    * Retrieves the JWT token and sets it in the Authorization header.
    * Throws an error if token is missing.
+   *
+   * This method tries multiple common locations/names for the token on AuthService
+   * and falls back to localStorage keys if needed. AuthService is cast to any to
+   * avoid compile errors when a specific accessor doesn't exist.
    */
   private getAuthHeaders(): HttpHeaders {
-    const token = this.auth.getToken();
+    let token: string | null | undefined;
+
+    // Try common method/property names on AuthService (avoid TS errors by casting to any)
+    const authAny = this.auth as any;
+    if (typeof authAny.getToken === 'function') {
+      token = authAny.getToken();
+    } else if (typeof authAny.getAccessToken === 'function') {
+      token = authAny.getAccessToken();
+    } else if (typeof authAny.getJwtToken === 'function') {
+      token = authAny.getJwtToken();
+    } else if (authAny.token) {
+      token = authAny.token;
+    } else if (authAny.accessToken) {
+      token = authAny.accessToken;
+    }
+
+    // Fallback to common localStorage keys
+    if (!token) {
+      token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+    }
+
     if (!token) {
       throw new Error('Authentication token not found.');
     }
+
     return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 

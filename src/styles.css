@@ -1,1 +1,20 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Theme variables */
+:root{
+  --bg:#ffffff;
+  --text:#0b422f;
+  --muted:#6b8b7a;
+  --accent:#0b6b45;
+}
+[data-theme="dark"]{
+  --bg:#071114;
+  --text:#dfeee2;
+  --muted:#9fb8a8;
+  --accent:#2bd38c;
+}
+body{ background:var(--bg); color:var(--text); }
+
+/* Sidebar logo adjustments */
+.sidebar .logo{ display:flex; align-items:center; gap:8px }
+.sidebar .logo img{ width:36px; height:36px; object-fit:cover }

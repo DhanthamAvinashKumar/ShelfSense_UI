@@ -26,7 +26,7 @@ export class ShelfMetricsService {
   constructor(private http: HttpClient, private auth: AuthService) {}
 
   private getAuthHeaders(): HttpHeaders {
-    const token = this.auth.getToken();
+    const token = (this.auth as any).token ?? localStorage.getItem('token');
     if (!token) throw new Error('Authentication token not found.');
     return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
@@ -40,3 +40,4 @@ export class ShelfMetricsService {
    
 
 }
+

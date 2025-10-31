@@ -1,0 +1,10 @@
+<form [formGroup]="categoryForm" (ngSubmit)="submitCategory()">
+  <input formControlName="name" placeholder="Category Name" />
+  <input formControlName="description" placeholder="Description" />
+  <label>
+    <input type="checkbox" formControlName="includeImage" />
+    Include Image
+  </label>
+  <button type="button" (click)="startVoiceInput()">🎤 Speak</button>
+  <button type="submit">Create Category</button>
+</form>
